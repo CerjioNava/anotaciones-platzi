@@ -56,11 +56,50 @@ Puedo ejecutarlo en servidores, para herramientas, transpiladores, scrapping, au
 
 ## EVENTLOOP: ASÍNCRONA POR DISEÑO
 
+Un Event Loop es un proceso con un bucle que gestiona, de forma asíncrona, todos los eventos de tu aplicación.
 
+1. Event Queue (Cola de eventos): 
+	
+	Contiene todos los eventos que se generan por nuestro código (Funciones, peticiones, etc.), estos eventos quedan en una cola que van pasando uno a uno al Event Loop.
+
+2. Event Loop (Bucle de eventos): 
+
+	Se encarga de resolver los eventos ultra rápidos que llegan desde el Event Queue. En caso de no poder resolverse rápido, enviá el evento al Thread Pool. Todo evento del código para por acá, sean funciones, request, etc.
+
+3. Thread Pool (Piscina de hilos): 
+	
+	Se encarga de gestionar los eventos de forma asíncrona. Una vez terminado lo devuelve al Event Loop. El Event Loop vera si lo pasa a Event Queue o no. 
+	Aquí se manda eventos lentos, como gestiones a bases de datos, lecturas de archivos, etc.
+	Para cada petición en el Thread Pool, se crea un nuevo Thread para terminar cada evento por separado.
 
 -------------------------------------------------------------------------------------------------
 
-##
+## MONOHILO: IMPLICACIONES EN DISEÑO Y SEGURIDAD
+
+El hecho de que sea monohilo lo hace delicado en el sentido de que puede ejecutarse algo que corte el código y detenga el programa, como la ausencia de sintaxis o una variable pendiente por definir.
+
+Código de ejemplo:
+
+	console.log('Hola mundo');
+
+	// SetInterval me permtie ejecutar una función cada n cantidad de tiempo en milisegundos.
+	// Esta instrucción es asíncrona, por lo que se ejecuta en n momento.
+
+	let i = 0;
+	setInterval(function() {
+	    console.log(i);
+	    i++;
+
+		// Al ser monohilo el peligro recae en que si el código se ejecuta y ocurre un error, se puede detener el proceso. Comprobar funciones y revisar lo que posiblemente puede fallar.
+		// Todo lo que sea asíncono y lo pueda llevar a ello, pues llevalo, y todo lo que no, revisar que no corte el programa.
+
+	    // if (i === 5) {
+	    //     console.log('forzamos error');
+	    //     var a = 3 + z;
+	    // }
+	}, 1000);
+
+	console.log('Segunda instrucción');
 
 -------------------------------------------------------------------------------------------------
 
