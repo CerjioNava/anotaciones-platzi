@@ -30,7 +30,7 @@ Puedo ejecutarlo en servidores, para herramientas, transpiladores, scrapping, au
 
 ### Características de NodeJS
 
-1. Concurrente: 
+1. Concurrente (Varios a la vez): 
 
 	- Monohilo con entradas y salidas asíncronas. 
 	- Un proceso por cada núcleo del procesador.
@@ -103,11 +103,57 @@ Código de ejemplo:
 
 -------------------------------------------------------------------------------------------------
 
-##
+## VARIABLES DE ENTORNO
+
+Las variables de entorno son una forma de llamar información de afuera a nuestro software, sirve para definir parámetros sencillos de configuración de los programas de modo que puedan ejecutarse en diferentes ambiente sin necesidad de modificar el código fuente de un script.
+
+- Process: El objeto "process" nos da información sobre el procesos que está ejecutando este script.
+
+- Env: La propiedad "env" es la que nos da acceso a las variables de entorno de manera sencilla.
+
+Ejemplo:
+
+	let ejemplo ="Alejandro-sin" //Esta variable la declaré aquí y puedo llamarla aquí.
+
+	// ¿Qué ocurre cuando quiero llamar un valor que no va dentro del software, si quiereo llamar una API, o que necesito una clave, o un token?
+
+	// El código no  debería guardar este tipo de valores credenciales y por esto existen las variables de entorno. Si grabasemos estos datos estaríamos obligados a cambiar el código del programa cada vez que se ejecutan en lugares diferentes, dificultando el despliegue.
+
+	// Por buenas prácticas heredadas de Linux las variables de entorno que vengan desde fuera (process.env.VARIABLE ) se ponen en mayúscula y se separan mediante guion bajo en vez de espacio.
+
+	let nombre = process.env.NOMBRE || 'Sin nombre'; 
+	let web = process.env.MI_WEB || 'no tengo web';
+	var apiKey = process.env.APIKEY || 'HF33o9oERVERVEEEEs';
+
+	console.log('Hola '+ nombre);
+	console.log('Mi web es '+ web);
+
+	// Me retornara { Hola "Sin nombre", mi web es "no tengo web"} ya que tiene  la expresión OR || me asigna estas variables por defecto
+
+	// Desde la terminal (bash) asignarle las variables antes del codigo:
+
+	< NOMBRE:"Alejandro" MI_WEB"123QWERTY" APIKEY=10937472 node conceptos/entorno.js >
+
 
 -------------------------------------------------------------------------------------------------
 
-##
+## NODEMON
+
+Nodemon (Demons en linux), es una herramienta que nos ayuda a detectar los cambios y los ejecutarlos automáticamente.
+
+	npm install -g nodemon
+
+### PM2
+
+PM2 nos ayuda a ver los datos de nuestra aplicacion en producción, como el uso de CPU, Memoria, cuantas veces se ha reiniciado, etc. No es recomendable ocupar PM2 en desarrollo ya que con la cantidad de datos y controles nos dará mas problemas que soluciones.
+
+	npm install -g pm2
+
+Para detener el proceso que está en ejecución con un ID:
+
+	pm2 stop + id
+
+NOTA: Nodemon es mejor para desarrollo, PM2 es mejor para producción.
 
 -------------------------------------------------------------------------------------------------
 
