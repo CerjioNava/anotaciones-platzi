@@ -332,6 +332,126 @@ IMPORTANTE: Al aplicarle una anotación a una clase, estamos indicando que dicha
 
 -------------------------------------------------------------------------------------------------
 
+## Creación de proyecto bajo arquitectura de dependencias
+
+Vamos a crear un proyecto, nos dirijimos a "Spring Initializr" en Google, ya que este es el inicializador por defecto para crear un proyecto de Spring Boot.
+
+- Nos dirijimos a Spring Initializr en: https://start.spring.io/
+- Gestor de Dependencias: Maven Project
+- Language: Java
+- Versión de Spring Boot: La más estable en el momento (2.5.3)
+- Metadatos del proyecto:
+	- Group: com.fundamentosplatzi.springboot
+	- Artifact: fundamentos
+- Java: 11
+- Generamos el proyecto y se descarga.
+
+- Abrimos el proyecto con IntelliJ.
+- Creamos nuestro repositorio de Git.
+- Creamos los paquetes en la carpeta main de "component", "controller", "service" y "repository".
+
+-------------------------------------------------------------------------------------------------
+
+## Inyección de Dependencia "Component"
+
+Creamos en la carpeta component:
+	- ComponentDependency
+	- ComponentImplement
+	- ComponentTwoImplement
+
+En ComponentDependency:
+
+	public interface ComponentDependency {
+	    void saludar();
+	}
+
+En ComponentImplement:
+
+	@Component
+	public class ComponentImplement implements ComponentDependency {
+	    @Override
+	    public void saludar() {
+	        System.out.println("Hola mundo desde mi componente");
+	    }
+	}
+
+En ComponentTwoImplement:
+
+	@Component
+	public class ComponentTwoImplement implements ComponentDependency {
+	    @Override
+	    public void saludar() {
+	        System.out.println("Hola mundo desde mi componente dos");
+	    }
+	}
+
+En FundamentosApplication:
+
+	@SpringBootApplication
+	public class FundamentosApplication implements CommandLineRunner {
+
+		private ComponentDependency componentDependency;
+
+		public FundamentosApplication(@Qualifier("componentTwoImplement") ComponentDependency componentDependency) {
+			this.componentDependency = componentDependency;
+		}
+
+		public static void main(String[] args) {
+
+			SpringApplication.run(FundamentosApplication.class, args);
+
+		}
+
+		@Override
+		public void run(String... args) {
+			componentDependency.saludar();
+		}
+	}
+
+Con Qualifier defino cual clase o implementación quiero aplicar.
+
+-------------------------------------------------------------------------------------------------
+
+## Ejemplo de creación de dependencia propia
+
+- Creamos una carpeta "bean", en ella una interface/dependencia "MyBean" y una clase que la implemente llamada "MyBeanImplement".
+
+- Creamos una carpeta "configuration" desde la cual vamos a configurar todos los beans y dependencias propias.
+
+- Creamos "MyConfigurationBean".......
+
+.... VEASE LA CARPETA DE FUNDAMENTOS!
+
+Notamos que, en el ejemplo anterior utilizamos Qualifier para decidir cual implementación utilizar, sin embargo, utilizando el archivo que creamos "MyConfigurationBean", podemos decidir cual implementación devolver desde dicho archivo, lo cual es mucho mejor a nivel de arquitectura.
+
+También hicimos una inyección de dependencia, DENTRO de otra dependencia.
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
 ##
 
 -------------------------------------------------------------------------------------------------
