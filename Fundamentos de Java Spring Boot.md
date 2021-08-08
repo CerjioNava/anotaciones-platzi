@@ -20,7 +20,7 @@
 3. Configuración general de Spring Boot
 
 	- Cambio de puerto y path
-	- Uso de properties y valores
+	- Uso de properties y generación de POJO
 	- Uso de properties con ejemplo de generación de POJO
 	- Qué son los logs y cómo usarlos
 
@@ -428,15 +428,91 @@ También hicimos una inyección de dependencia, DENTRO de otra dependencia.
 
 -------------------------------------------------------------------------------------------------
 
-##
+## Cambio de Puerto y Path
+
+Nos ubicamos en el archivo "pom.xml" y agregamos una nueva dependencia en "dependencies":
+
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+	</dependency>
+
+Nos ubicamos en el archivo "application.properties" para añadir la siguiente configuración:
+
+	server.port=8081
+	server.servlet.context-path=/app
+
+Nos ubicamos en Controller y creamos una clase "TestController", para verificar que el puerto y el path cambiado anteriormente fue hecho correctamente.
+
+	@Controller
+	public class TestController {
+	    @RequestMapping     // Para aceptar todas las solicitudes dentro del método a nivel HTTP
+	    @ResponseBody       // Responder un cuerpo a nivel de servicio
+	    public ResponseEntity<String> function() {
+	        return new ResponseEntity<>("Hello from controller", HttpStatus.OK);
+	    }
+	}
+
+Ejecutamos y nos dirigimos al navegador en el puerto asignado: 
+
+	http://localhost:8081/app/
+
+Recordar que se desplega por el servidor embebido Tomcat por defecto. Puede configurarse si es necesario.
+
+Ahora vamos a agregar una nueva dependencia (SIMILAR AL NODEMON):
+
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-devtools</artifactId>
+		<optional>true</optional>
+	</dependency>
+
+Esta ultima dependencia redesplega la pagina con los cambios sin necesidad de reactivar el servidor de nuevo. Esto se hace haciendo Build.
 
 -------------------------------------------------------------------------------------------------
 
-##
+## Uso de properties y generación de POJO
+
+En el archivo "application.properties", añadimos las propiedades:
+
+	value.name=sergio
+	value.apellido=nava
+	value.random=${random.value}
+
+Estas propiedades pueden ser utilizadas a lo largo del proyecto.
+
+En la carpeta "configuration" creamos la clase "GeneralConfiguration":
+
+	@Configuration
+	public class GeneralConfiguration {
+	    @Value("${value.name}")
+	    private String name;
+
+	    @Value("${value.apellido}")
+	    private String apellido;
+
+	    @Value("${value.random}")
+	    private String random;
+
+	    @Bean
+	    public MyBeanWithProperties function() {
+	        return new MyBeanWithPropertiesImplement(name, apellido);
+	    }
+	}
+
+- POJO (Plain Old Java Object):
+
+	Es una instancia de una clase que no extiende ni implementa nada en especial. Sirve para enfatizar el uso de clases simples y que no dependen de un framework en especial. Por ejemplo, un Controller de Spring tiene que extender de SimpleFormController, e implementar los métodos abstractos de ese tipo, por eso no es un POJO. En cambio, si defines una clase Cliente con atributos y unas cuantas operaciones, tienes un simple y modesto POJO.
 
 -------------------------------------------------------------------------------------------------
 
-##
+## Uso de properties con ejemplo de generación de POJO
+
+En properties:
+
+	user.email=test@mail.com
+	user.password=1234
+	user.age=25
 
 -------------------------------------------------------------------------------------------------
 
