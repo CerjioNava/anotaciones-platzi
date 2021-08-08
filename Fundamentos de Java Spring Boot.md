@@ -164,7 +164,7 @@ Ejemplo Inversión de Control:
 		}
 	}
 
-### Inversión de Control en el contexto de Spring Boot
+### Inversión de Control en el contexto de Spring Boot (BEANS)
 
 - Los objetos que son administrados por el contenedor Spring IoC se denominan Beans.
 
@@ -182,6 +182,8 @@ Los beans básicamente son módulos desarrollados en Spring encargados de brinda
 Por ejemplo, si necesitamos referenciar que nuestra clase es un modelo hacemos uso del bean @entity. Esto nos permite usar propiedades creadas para este tipo de modulo que nos agilizan nuestro desarrollo. 
 
 Al hacer inversión de control y llamar a los beans se referencian los módulos funcionales creados por Spring, además Spring Boot facilita el fácil instanciamiento de estos a nuestra aplicación.
+
+Los Beans en Java son clases que cumplen con ciertas normas respecto al nombre de sus propiedades y métodos. De primera instancia un bean debe tener un constructor sin argumentos, además de tener declarados todos sus atributos como privados y para cada uno ellos un método getter y setter los cuáles sirven para obtener y agregar valores a estos atributos.
 
 ### Inyección de Dependencias
 
@@ -217,6 +219,10 @@ Hay 3 formas de aplicar la inyeccion de dependencias:
 - Por medio de atributo.
 - Por medio de metodos sets.
 - El mas famoso es por medio de constructor.
+
+### @AutoWired
+
+Lo que hace un @AutoWired es buscar un objeto manejado (beans) que implementen determinada interfaz para hacer referencia a él. DE esta manera no es neceario crear una instancia nueva del objeto cada vez que se necesite la funcionalidad de determinada clase 
 
 -------------------------------------------------------------------------------------------------
 
@@ -513,6 +519,91 @@ En properties:
 	user.email=test@mail.com
 	user.password=1234
 	user.age=25
+
+Creamos una carpeta "pojo" con una clase "UserPojo":
+	
+	@ConstructorBinding							// Para inyectar como dependencia a partir de las propiedades
+	@ConfigurationProperties(prefix = "user") 	// Prefijo de la propiedad "user"
+	public class UserPojo {	
+	    private String email;
+	    private String password;
+	    private int age;
+
+	    public UserPojo(String email, String password, int age) {
+	        this.email = email;
+	        this.password = password;
+	        this.age = age;
+	    }
+
+	    // getter y setter
+
+	}
+
+Notamos el prefijo en la anotación que hace referencia a la propiedad "user".
+
+Para Spring Boot, la clase UserPojo aún no se ha configurado como dependencia, entonces debemos realizar esa configuración. Vamos al "GeneralConfiguration" y añadimos la anotación:
+
+	@EnableConfigurationProperties(UserPojo.class)
+	public class GeneralConfiguration { ... }
+
+De esta manera, definimos que la clase "UserPojo" es la que se representará como propiedades de la aplicación.
+
+-------------------------------------------------------------------------------------------------
+
+## Qué son los logs y cómo usarlos
+
+Los Logs son la herramienta que nos permite debuggear la información. 
+
+Utilizaremos la librería Apache Commons, con los niveles de logs:
+
+	- Error: Muestrea información cuando ocurre un error.
+	- Info: Muestrea información general.
+	- Debug: Para depurar o debuggear a nivel de código fuente.
+	- Otros
+
+Vamos al "application.properties" para programar los niveles de Logs que queremos mostrar en el servidor.
+
+	logging.level.root=info
+	logging.level.org.springframework.web=info
+	logging.level.org.hibernate=error
+
+Creamos entonces un LOGGER en "FundamentosApplication" y usamos LOGGER.error() para generar un error.
+
+	private final Log LOGGER = LogFactory.getLog(FundamentosApplication.class);
+	...
+	try {
+		int value = 10/0;
+		LOGGER.debug("Mi valor: " + value);		// No se imprime ya que se catchea el error primero.
+	} catch (Exception e) {
+		LOGGER.error("Esto es un error al dividir por cero 0 " + e.getMessage());
+	}
+
+Podemos ir a una dependencia y hacer algo similar con "info" y "debug":
+
+	Log LOGGER = LogFactory.getLog(MyBeanWithDependencyImplement.class);
+	...
+	LOGGER.info("Hemos ingresado al método printWithDependency");
+    int numero=1;
+    LOGGER.debug("El numero enviado como parámetro a la dependencia operation es: " + numero);
+    ...
+
+Y cambiamos el nivel de logs en properties, a "debug", para así mostrar el debug e info anterior.
+
+-------------------------------------------------------------------------------------------------
+
+## Modelado de entidades con JPA
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
+
+-------------------------------------------------------------------------------------------------
+
+##
 
 -------------------------------------------------------------------------------------------------
 
