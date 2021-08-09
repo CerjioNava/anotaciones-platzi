@@ -593,18 +593,270 @@ Y cambiamos el nivel de logs en properties, a "debug", para así mostrar el debu
 
 ## Modelado de entidades con JPA
 
+### JPA (Java Persistencee API)
+
+- Es el enfoque estandar de la industria para modelar objetos a nivel de base de datos. 
+
+- Es la especificación de Java para acceder, conservar y administrar datos entre objetos o clases y una base de datos relacional.
+
+### Entidades y Persistencia
+
+- Una entidad en Java es un objeto de persistencia y representa una tabla en una base de datos, y cada instancia de entidad corresponde a una fila en la tabla.
+
+- La persistencia es la habilidad de una aplicación para mantener (persistir) y recuperar información de sistemas de almacenamiento no volátiles.
+
+- El estado de una entidad se representa por campos de persistencia o propiedades de persistencia.
+
+EJEMPLO:
+
+Vamos al archivo "pom.xml" y añadimos una dependencia de Spring Data que nos permitirá hacer el modelado, entidades y persistencia de datos.
+
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-data-jpa</artifactId>
+	</dependency>
+
+Creamos un nuevo paquete llamado "entity" y dentro una clase "Post".
+
+	@Entity
+	@Table(name = "post") 			
+	public class Post {
+	    @Id 														// Id que representa la identidad 
+	    @GeneratedValue(strategy = GenerationType.IDENTITY)			// Crea un Id unico
+	    @Column(name = "id_post", nullable = false, unique = true) 	// Columna de la BD como propiedad a nivel de clase 
+	    private Long id;											
+	    @Column(name = "description", length = 255)
+	    private String description;
+
+	    @ManyToOne 													// Relación muchos a poco
+	    private User user;
+
+	    // getter, setter, tostring, constructor
+	}
+
+Creamos la entidad User:
+
+	@Entity
+	@Table(name = "user")
+	public class User {
+	    @Id
+	    @GeneratedValue(strategy = GenerationType.AUTO)
+	    @Column(name = "id_user", nullable = false, unique = true)
+	    private Long id;
+
+	    @Column(length = 50)
+	    private String name;
+	    @Column(length = 50)
+	    private String email;
+
+	    private LocalDate birthDate;
+
+	    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	    @JsonManagedReference
+	    private List<Post> posts = new ArrayList<>();
+
+	    // getter, setter, tostring, constructor
+
+	}
+
+NOTA: No es necesario colocar la anotación @Column si el nombre del atributo tiene el mismo nombre del campo en la base de datos. Si son diferentes, si se debe utilizar dicha anotación. Sin embargo, es buena práctica.
+
 -------------------------------------------------------------------------------------------------
 
-##
+## Configuración de datasource con properties y classes
+
+En nuestro "pom.xml" añadimos la nueva dependencia:
+
+	<dependency>
+		<groupId>com.h2database</groupId>
+		<artifactId>h2</artifactId>
+		<version>1.4.200</version>
+		<scope>runtime</scope>
+	</dependency>
+
+Esta es la dependencia relacionada con nuestra base de datos, H2. Se ejecuta en tiempo de ejecución.
+
+Este tipo de base de datos siempre que se inicia la aplicación hay que cargarle los datos, y al finalizar la ejecución, dichos datos se pierden. Por eso se ejecuta en memoria.
+
+Ahora en el "application.properties" configuramos lo relacionado a la base de datos.
+
+	spring.datasource.url=jdbc:h1:mem:testdb
+	spring.datasource.driverClassName=org.h2.Driver
+	spring.datasource.username=sa
+	spring.datasource.password=
+	spring.jpa.database-platform=org.hibernate.dialect.h2Dialect
+
+Con esto, ya podemos crear la capa de repositorios e insertar valores, eliminar, actualizar y obtener valores a nivel de base de datos. Sin embargo, no usaremos esta configuración en el curso.
+
+Vamos a configurar esta datasource desde el archivo "GeneralConfiguration" con:
+
+	@Bean
+	public DataSource dataSource() {
+		DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+		dataSourceBuilder.driverClassName("org.h2.Driver");
+		dataSourceBuilder.url("jdbc:h2:mem:testdb");
+		dataSourceBuilder.username("SA");
+		dataSourceBuilder.password("");
+	}
 
 -------------------------------------------------------------------------------------------------
 
-##
+## Registro en base de datos con JpaRepository
+
+JpaRespository es una impplementación a nivel de interfaz del JPA, donde tenemos métodos para manipular información y más.
+
+Creamos las interfaces "UserRepository" y "PostRepository" en "repository". 
+
+En "FundamentosApplication" inyectamos nuestros repositorios y:
+
+	private void saveUsersInDataBase() {
+		User user1 = new User("user1", "user1@domain.com", LocalDate.of(2021, 03, 20));
+		User user2 = new User("user2", "user2@domain.com", LocalDate.of(2021, 05, 21));
+		//...
+		List<User> list = Arrays.asList(user1, user2, user3, ...);
+		list.stream().forEach(userRepository::save);
+	}		
+	// Lo llamamos en el run
+
+En "application.properties":
+
+	spring.jpa.show-sql=true
+
+De esta manera observamos en la terminal el proceso de creación de la tabla y demás.		
 
 -------------------------------------------------------------------------------------------------
 
-##
+## Uso de JPQL en anotación Query
 
+### JPQL
+
+- JPQL es el lenguaje de consulta definido por JPA.
+
+- Similar a SQL pero con la particularidad de operar sobre objetos y propiedades, mientras que en SQL se trabaja con tablas y columnas.
+
+- Sin embargo, en JPQL no podemos hacer Insert, solo Update, Select y Delete.
+
+Nos dirigimos a "UserRepository":
+
+	@Query("SELECT user FROM User user WHERE user.email=?1")        // ?1 es el parametro 1 de la funcion
+    Optional<User> findByUserEmail(String email);
+    @Query("SELECT user FROM User user WHERE user.name like ?1%")
+    List<User> findAndSort(String name, Sort sort);
+
+En "FundamentosApplication":
+
+	private void getInformationJpqlFromUser() {
+		LOGGER.info("Usuario con el método findByUserEmail: " +
+				userRepository.findByUserEmail("user13@domain.com")
+						.orElseThrow(() -> new RuntimeException("No se encontró el usuario")));
+		
+		userRepository.findAndSort("user1", Sort.by("id").ascending())
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario con método sort: " + user));
+	}
+	// Lo llamamos en el "run".
+
+-------------------------------------------------------------------------------------------------
+
+## Uso de anotación "value" para apuntar a properties
+
+Creamos una nueva propiedad en "resources" (esto no es muy práctico).
+
+	jdbc.url=jdbc:h2:mem:testdb
+	driver=org.h2.Driver
+	username=SA
+	password=
+
+Añadimos la anotación al "GeneralConfiguration":
+	
+	@PropertySource("classpath:connection.properties")
+
+Creamos:
+
+	@Value("${jdbc.url}")
+    private String jdbcUrl;
+
+    @Value("${driver}")
+    private String driver;
+
+    @Value("${username}")
+    private String username;
+
+    @Value("${password}")
+    private String password;
+
+Sustituimos en el DataSource y así dejamos de usar values del application.properties.
+
+Sin embargo, lo mejor sigue siendo utilizar variables de entorno para configurar a nivel de base de datos.
+
+-------------------------------------------------------------------------------------------------
+
+## Obtención de información usando Query Methods
+
+- Query Methods:
+
+	Es una definición de una consulta manualmente como una cadena o derivarla del nombre del método.
+	Es decir, con el mismo nombre del método se define la Query.
+	Es otra alternativa a las anotaciones Query con JPQL.
+
+Ejemplo: Los métodos de la interface "UserRepository".
+
+En "UserRepository", sin anotaciones:
+
+	List<User> findByName(String name);
+    Optional<User> findByEmailAndName(String email, String name);
+
+En "FundamentalApplication":
+
+	userRepository.findByName("user4")
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario con query method: " + user));
+
+	LOGGER.info("Usuario con query method finByEmailAndName: " +
+			userRepository.findByEmailAndName("user5@domain.com", "user5")
+			.orElseThrow(() -> new RuntimeException("Usuario no encontrado"))
+	);
+
+-------------------------------------------------------------------------------------------------
+
+## Uso de Query methods con Or, and, OrderBy, Between, Sort
+
+En "UserRepository":
+
+    List<User> findByNameLike(String name);
+
+    List<User> findByNameOrEmail(String name, String email);
+    
+    List<User> findByBirthDateBetween(LocalDate begin, LocalDate end);
+
+    List<User> findByNameLikeOrderByIdDesc(String name);
+
+    List<User> findByNameContainingOrderByIdDesc(String name);
+
+En "FundamentosApplication":
+
+	userRepository.findByNameLike("%user1%")
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario findByNameLike: " + user));
+
+	userRepository.findByNameOrEmail(null, "user10@domain.com")
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario findByNameOrEmail: " + user));
+
+	userRepository.findByBirthDateBetween(
+			LocalDate.of(2021, 3, 1),
+			LocalDate.of(2021, 8, 2))
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario con intervalo de fechas: " + user));
+
+	userRepository.findByNameLikeOrderByIdDesc("%user1%")
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario encontrado con Like y ordernado: " + user));
+
+	userRepository.findByNameContainingOrderByIdDesc("user1")
+			.stream()
+			.forEach(user -> LOGGER.info("Usuario encontrado con containing y ordernado: " + user));
+ 
 -------------------------------------------------------------------------------------------------
 
 ##
